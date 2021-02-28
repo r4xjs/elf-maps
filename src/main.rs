@@ -1,4 +1,3 @@
-
 use std::path::PathBuf;
 use std::fs::File;
 use std::io::Read;
@@ -64,8 +63,6 @@ impl ElfMapEntry {
 	}
     }
 }
-
-
 
 #[derive(Debug,Clone)]
 struct ElfMaps {
@@ -161,6 +158,8 @@ fn main() -> Result<(), Box<dyn std::error::Error + 'static>>{
 	.lines()
 	.map(|l| ProcMapEntry::parse(l).unwrap())
 	.collect();
+
+    // take parse map entries and add elf section header infos
     let elf_maps = ElfMaps::new(&map_entries)?;
     println!("{}", elf_maps);
 

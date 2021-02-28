@@ -118,13 +118,14 @@ impl fmt::Display for ElfMaps {
 	for (module_name, pmes) in &self.module {
 	    for pme in pmes {
 		for sec in &pme.elf_sections {
-		    write!(f, "{:x}-{:x} {} {:24} {:08x} {:08x} {}\n",
-			pme.start,
-			pme.end,
+		    write!(f, "{:x}-{:x} {} {:24} {:08x} {:08x} {:08x} {}\n",
+			pme.start + sec.offset as usize,
+			pme.start + sec.offset as usize + sec.size as usize,
 			pme.perm,
 			sec.name,
 			pme.offset,
 			sec.offset,
+                        sec.size,
 			module_name,
 		    )?;
 		}
@@ -136,17 +137,25 @@ impl fmt::Display for ElfMaps {
 
 fn usage(file_name: &str){
     println!("Usage: {} <pid>", file_name);
+    println!("Output format:\nstart-end permission section_name maps_offset elf_offset section_size filename\n");
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error + 'static>>{
 
     // args parsing
     let mut args = std::env::args();
-    if args.len() != 2 {
-	usage(&args.next().unwrap());
+    let fname = args.next().unwrap();
+    if args.len() != 1 {
+	usage(&fname);
 	return Ok(());
     }
-    let pid: u32 = args.nth(1).unwrap().parse()?; 
+    let pid: u32 = match args.next().unwrap().parse() {
+	Ok(v) => v,
+	Err(_) => {
+	    usage(&fname);
+	    return Ok(());
+	},
+    }; 
     let proc_dir = PathBuf::from("/proc").join(pid.to_string());
 
     // read /proc/<pid>/maps
